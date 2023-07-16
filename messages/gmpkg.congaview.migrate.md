@@ -24,4 +24,4 @@ Salesforce API Version
 
 # examples
 
-- <%= config.bin %> <%= command.id %>
+- <%= config.bin %> <%= command.id %> -o gmpkg-demo --api-version=58.0 -f "/data/conga/export/Opportunity_All_View.json" -d "/data/conga/migrated"

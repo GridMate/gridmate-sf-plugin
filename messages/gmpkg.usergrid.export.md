@@ -28,4 +28,5 @@ Salesforce API Version
 
 # examples
 
-- <%= config.bin %> <%= command.id %>
+- <%= config.bin %> <%= command.id %> -o gmpkg-demo --api-version=58.0 -d "/data/Opportunity/export" -n "Opportunity_All_Grid,Opportunity_Pipeline_Grid"
+- <%= config.bin %> <%= command.id %> -o gmpkg-demo --api-version=58.0 -d "/data/Opportunity/export" -q "Select Id, Name From gmpkg_xUser_Grid_c Where gmpkg_Object_Name_c = 'Opportunity'"

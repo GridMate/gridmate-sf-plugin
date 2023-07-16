@@ -28,4 +28,5 @@ Salesforce API Version
 
 # examples
 
-- <%= config.bin %> <%= command.id %>
+- <%= config.bin %> <%= command.id %> -o gmpkg-demo --api-version=58.0 -d "/data/conga/export" -n "Opportunity_All_View"
+- <%= config.bin %> <%= command.id %> -o gmpkg-demo --api-version=58.0 -d "/data/conga/export" -q "SELECT Id, Name FROM CRMC_PP_GridView_c Where CRMC_PP_ObjectName_c='Opportunity'"

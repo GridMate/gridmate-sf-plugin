@@ -24,4 +24,5 @@ Salesforce API Version
 
 # examples
 
-- <%= config.bin %> <%= command.id %>
+- <%= config.bin %> <%= command.id %> -o gmpkg-demo --api-version=58.0 -f "/data/Opportunity/import/Opportunity_All_Grid.json"
+- <%= config.bin %> <%= command.id %> -o gmpkg-demo --api-version=58.0 -d "/data/Opportunity/import"
