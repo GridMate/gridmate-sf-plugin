@@ -145,12 +145,20 @@ export default class UserGridImport extends SfCommand<boolean> {
     }
 
     if (flags.directory) {
-      fs.readdirSync(flags.directory).forEach((file) => {
-        const filePath = path.join(String(flags.directory), file);
-        if (!fileList.includes(filePath) && filePath.endsWith('.json')) {
-          fileList.push(filePath);
-        }
-      });
+      const getFiles = (dir: string): void => {
+        fs.readdirSync(dir).forEach((file) => {
+          const filePath = path.join(String(dir), file);
+          const fileStat = fs.statSync(filePath);
+
+          if (fileStat.isDirectory()) {
+            getFiles(filePath);
+          } else if (!fileList.includes(filePath) && filePath.endsWith('.json')) {
+            fileList.push(filePath);
+          }
+        });
+      };
+
+      getFiles(flags.directory);
     }
 
     this.progress.start(0, {}, { title: 'Import progress' });

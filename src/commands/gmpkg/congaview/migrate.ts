@@ -177,11 +177,20 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
       return Object.keys(inputRec.conditionalRules).reduce((acc: any, fieldKey: string) => {
         const coloringField = inputRec.conditionalRules[fieldKey];
 
-        acc[fieldKey] = Object.keys(coloringField).map((ruleKey) => ({
-          color: coloringField[ruleKey].backColor,
-          exp: colorings[coloringField[ruleKey].expression],
-          label: ruleKey,
-        }));
+        acc[fieldKey] = Object.keys(coloringField).map((ruleKey) => {
+          const coloring = coloringField[ruleKey];
+          const coloringExp = colorings[coloring.expression];
+
+          if (!coloringExp) {
+            this.error(`Not mapped coloring : field => ${fieldKey}, exp => ${String(coloring.expression)}`);
+          }
+
+          return {
+            color: coloring.backColor,
+            exp: coloringExp,
+            label: ruleKey,
+          };
+        });
 
         return acc;
       }, {});
