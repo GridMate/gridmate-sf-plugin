@@ -1,3 +1,6 @@
+/* eslint-disable guard-for-in */
+/* eslint-disable @typescript-eslint/no-for-in-array */
+/* eslint-disable no-await-in-loop */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -6,17 +9,17 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable-next-line @typescript-eslint/no-unsafe-return */
-/* @typescript-eslint/no-unsafe-member-access */
-/* @typescript-eslint/no-unsafe-call */
-/* eslint-disable-next-line class-methods-use-this */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable class-methods-use-this */
 
 import * as path from 'path';
 import * as fs from 'fs';
 
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Connection, Messages } from '@salesforce/core';
-import { Record } from 'jsforce';
+import { Record, Field } from 'jsforce';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('gmpkg', 'gmpkg.congaview.migrate');
@@ -122,12 +125,12 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
     return this.migrateCongaView(inputRec, flags);
   }
 
-  private migrateCongaView(inputRec: JsonRecord, flags: any): boolean {
+  private async migrateCongaView(inputRec: JsonRecord, flags: any): Promise<boolean> {
     const outputRec: OutputRecord = {
-      fullName: `${String(inputRec.Name.replace(' ', '_'))}_${String(inputRec.Id)}`,
+      fullName: `${String(inputRec.Name.replaceAll(' ', '_'))}`,
       metadata: {
         Id: inputRec.Id,
-        fullName: `${String(inputRec.Name.replace(' ', '_'))}_${String(inputRec.Id)}`,
+        fullName: `${String(inputRec.Name.replaceAll(' ', '_'))}`,
         label: inputRec.Name,
         objectApiName: inputRec.CRMC_PP__ObjectName__c,
         description: inputRec.CRMC_PP__Description__c,
@@ -137,16 +140,16 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
         columnStyle: this.buildColumnStyle(inputRec.CRMC_PP__JSON__c),
         groupBy: this.buildGroupBy(inputRec.CRMC_PP__JSON__c),
         aggregate: this.buildAggregate(inputRec.CRMC_PP__JSON__c),
-        filter: this.buildFilter(inputRec.CRMC_PP__JSON__c),
+        filter: await this.buildFilter(inputRec.CRMC_PP__JSON__c),
         searchFields: this.buildSearchFields(inputRec.CRMC_PP__JSON__c),
         sort: this.buildSort(inputRec.CRMC_PP__JSON__c),
-        pageSize: inputRec.CRMC_PP__JSON__c.takeCount / 10,
+        pageSize: inputRec.CRMC_PP__JSON__c.takeCount ? Math.min(inputRec.CRMC_PP__JSON__c.takeCount, 50) : 50,
         frozenColumns: 0,
         showColumnBorder: true,
         showRecordDetails: false,
         enableSplitView: this.buildEnableSplitView(inputRec.CRMC_PP__JSON__c),
         actions: this.buildActions(inputRec.CRMC_PP__JSON__c),
-        related: this.buildRelated(inputRec, flags),
+        related: await this.buildRelated(inputRec, flags),
       },
     };
 
@@ -167,7 +170,7 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
     if (inputRec.displayColumns) {
       return inputRec.displayColumns
         .filter((x: JsonRecord) => x.field)
-        .sort((a: JsonRecord, b: JsonRecord) => b.ordinal - a.ordinal)
+        .sort((a: JsonRecord, b: JsonRecord) => a.ordinal - b.ordinal)
         .map((x: JsonRecord) => x.field);
     }
   }
@@ -182,7 +185,7 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
           const coloringExp = colorings[coloring.expression];
 
           if (!coloringExp) {
-            this.error(`Not mapped coloring : field => ${fieldKey}, exp => ${String(coloring.expression)}`);
+            this.warn(`Not mapped coloring : field => ${fieldKey}, exp => ${String(coloring.expression)}`);
           }
 
           return {
@@ -199,7 +202,7 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
 
   private buildColumnStyle(inputRec: JsonRecord): unknown {
     if (inputRec.displayColumns) {
-      return inputRec.displayColumns
+      const columStyle = inputRec.displayColumns
         .filter((x: JsonRecord) => x.field)
         .sort((a: JsonRecord, b: JsonRecord) => b.ordinal - a.ordinal)
         .reduce((res: JsonRecord, x: JsonRecord) => {
@@ -207,6 +210,11 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
           res[x.field] = `width:${width}px;`;
           return res;
         }, {});
+
+      // eslint-disable-next-line camelcase
+      columStyle.gm__header = 'width:120px;';
+
+      return columStyle;
     }
   }
 
@@ -259,11 +267,11 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
     }
   }
 
-  private buildFilter(inputRec: JsonRecord): unknown {
+  private async buildFilter(inputRec: JsonRecord): Promise<unknown> {
     if (inputRec.filter) {
       return {
         type: 'Advanced',
-        value: this.parseFilter(inputRec.filter),
+        value: await this.parseFilter(inputRec.filter, inputRec.objectName),
       };
     }
 
@@ -273,18 +281,105 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
     };
   }
 
-  private parseFilter(inputRec: JsonRecord): unknown {
-    if (inputRec.logic) {
+  private async parseFilter(inputFilter: JsonRecord, objectName: string): Promise<unknown> {
+    if (inputFilter.logic) {
       return {
-        [inputRec.logic]: this.parseFilter(inputRec.filters),
+        [inputFilter.logic]: await this.parseFilter(inputFilter.filters, objectName),
       };
-    } else if (Array.isArray(inputRec)) {
-      return inputRec.map((filter: JsonRecord) => this.parseFilter(filter));
-    } else if (typeof inputRec === 'object') {
+    } else if (inputFilter.filters) {
       return {
-        [inputRec.field]: this.getExpression('soql', inputRec.operator, inputRec.value),
+        and: await this.parseFilter(inputFilter.filters, objectName),
       };
+    } else if (Array.isArray(inputFilter)) {
+      const filterList = [];
+
+      for (const filter of inputFilter) {
+        filterList.push(await this.parseFilter(filter, objectName));
+      }
+
+      return filterList;
+    } else if (typeof inputFilter === 'object') {
+      const objectDesc = await this.connection.describe$(objectName);
+
+      if (inputFilter.field.includes('!')) {
+        const relationship = objectDesc.childRelationships.find(
+          (r) => r.relationshipName === inputFilter.field.split('!')[0]
+        );
+
+        if (relationship) {
+          const childObjectDesc = await this.connection.describe$(relationship.childSObject);
+
+          const fieldName = inputFilter.field.split('!')[1];
+          const fieldDesc = fieldName.includes('.')
+            ? await this.getSubFieldDesc(fieldName, relationship.childSObject)
+            : childObjectDesc.fields.find((f) => f.name === fieldName);
+
+          if (!fieldDesc) this.error(`${String(inputFilter.field)} is null`);
+
+          const filterValue: any = this.getExpression('soql', fieldDesc, inputFilter.operator, inputFilter.value);
+
+          return {
+            [`with ${relationship.relationshipName}`]: {
+              field: fieldName,
+              childSObject: relationship.childSObject,
+              operator: filterValue.operator,
+              value: filterValue.value,
+            },
+          };
+        }
+      } else {
+        const fieldDesc = inputFilter.field.includes('.')
+          ? await this.getSubFieldDesc(inputFilter.field, objectName)
+          : objectDesc?.fields.find((f) => f.name === inputFilter.field);
+
+        if (!fieldDesc) this.error(`${String(inputFilter.field)} is null`);
+
+        return {
+          [inputFilter.field]: this.getExpression('soql', fieldDesc, inputFilter.operator, inputFilter.value),
+        };
+      }
     }
+  }
+
+  private async getSubFieldDesc(fieldPath: string, objectName: string): Promise<Field> {
+    const objectDesc = await this.connection?.describe$(objectName);
+
+    if (objectDesc) {
+      const fieldApiName = this.getFieldApiName(fieldPath);
+      const refFieldDesc = objectDesc.fields.find((f) => f.name === fieldApiName);
+
+      if (refFieldDesc) {
+        if (fieldPath.includes('.') && refFieldDesc.referenceTo) {
+          if (refFieldDesc.referenceTo.length > 0) {
+            for (const refObjType of refFieldDesc.referenceTo) {
+              const subRefFieldDesc = await this.getSubFieldDesc(
+                fieldPath.split('.').splice(0, 1).join('.'),
+                refObjType
+              );
+
+              if (subRefFieldDesc) return subRefFieldDesc;
+            }
+          }
+        }
+
+        return refFieldDesc;
+      }
+    }
+
+    return null;
+  }
+
+  private getFieldApiName(fieldApiName: string): string {
+    if (fieldApiName.includes('.')) {
+      const apiName = fieldApiName.split('.')[0];
+      if (apiName.endsWith('__r')) {
+        return apiName.replace('__r', '__c');
+      } else {
+        return apiName + 'Id';
+      }
+    }
+
+    return fieldApiName;
   }
 
   private buildSearchFields(inputRec: JsonRecord): unknown {
@@ -301,28 +396,29 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
     }
   }
 
-  private buildRelated(inputRec: JsonRecord, flags: any): unknown {
+  private async buildRelated(inputRec: JsonRecord, flags: any): Promise<unknown> {
     const relatedList: any = [];
     const childGridSettings = inputRec.CRMC_PP__JSON__c.childGridSettings;
+    const objectDesc = await this.connection.describe$(inputRec.CRMC_PP__ObjectName__c);
 
     if (childGridSettings && Object.keys(childGridSettings).length > 0) {
-      Object.keys(childGridSettings).forEach((relatedKey) => {
+      for (const relatedKey of Object.keys(childGridSettings)) {
         const relatedRec: JsonRecord = childGridSettings[relatedKey];
 
         if (relatedRec.objectName && relatedRec.displayColumns) {
           const outputRec: OutputRelatedRecord = {
-            fullName: `${String(inputRec.Name.replace(' ', '_'))}-${relatedKey}`,
+            fullName: `${String(inputRec.Name.replaceAll(' ', '_'))}-${relatedKey}`,
             metadata: {
-              label: relatedKey,
+              label: `${String(objectDesc.label)} - ${relatedKey.replace('__r', '')}`,
               objectApiName: relatedRec.objectName,
-              fullName: `${String(inputRec.Name.replace(' ', '_'))}-${relatedKey}`,
+              fullName: `${String(inputRec.Name.replaceAll(' ', '_'))}-${relatedKey}`,
               owner: this.buildOwner(inputRec),
               columns: this.buildColumns(relatedRec),
               columnStyle: this.buildColumnStyle(relatedRec),
-              filter: this.buildFilter(relatedRec),
+              filter: await this.buildFilter(relatedRec),
               groupBy: this.buildGroupBy(relatedRec),
               sort: this.buildSort(relatedRec),
-              pageSize: relatedRec.takeCount / 10,
+              pageSize: relatedRec.takeCount ? Math.min(relatedRec.takeCount, 50) : 50,
               actions: this.buildActions(relatedRec),
               showColumnBorder: true,
             },
@@ -347,29 +443,27 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
             this.error(`Cannot save related grid ${relatedKey}`);
           }
         }
-      });
+      }
 
       return relatedList;
     }
   }
 
   private buildEnableSplitView(inputRec: JsonRecord): boolean {
-    if (inputRec.readingPane) {
-      return inputRec.readingPane.position === 'right';
-    }
-
-    return false;
+    const childGridSettings = inputRec.childGridSettings;
+    return childGridSettings && Object.keys(childGridSettings).length > 0;
   }
 
-  private getExpression(interpreter: string, fromOp: string, fromValue: unknown): unknown {
+  private getExpression(interpreter: string, fieldDesc: Field, fromOp: string, fromValue: unknown): unknown {
     const operatorMap: JsonRecord = {
-      eq: '=',
-      neq: '!=',
+      eq: fieldDesc.type !== 'picklist' ? '=' : 'in',
+      neq: fieldDesc.type !== 'picklist' ? '!=' : 'not in',
       contains: 'like',
       doesnotcontain: 'notLike',
       includes: 'includes',
       dynamic: 'dynamic',
       isnull: 'isnull',
+      isnotnull: 'isnotnull',
       lte: '<=',
       gte: '>=',
       lt: '<',
@@ -398,6 +492,14 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
       };
     }
 
+    // Isnull operator
+    if (targetOp === 'isnotnull') {
+      return {
+        operator: '!=',
+        value: null,
+      };
+    }
+
     // Includes operator and soql expression
     if (targetOp === 'includes' && interpreter === 'soql') {
       return {
@@ -411,6 +513,14 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
       return {
         operator: 'includes',
         value: String(fromValue).split(','),
+      };
+    }
+
+    // Picklist field
+    if (fieldDesc.type === 'picklist' && interpreter === 'soql') {
+      return {
+        operator: targetOp,
+        value: `('${String(fromValue)}')`,
       };
     }
 
