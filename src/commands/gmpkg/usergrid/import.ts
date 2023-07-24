@@ -7,10 +7,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable-next-line @typescript-eslint/no-unsafe-return */
-/* @typescript-eslint/no-unsafe-member-access */
-/* @typescript-eslint/no-unsafe-call */
-/* eslint-disable-next-line class-methods-use-this */
+/* eslint-disable  @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable  class-methods-use-this */
 
 import * as path from 'path';
 import * as fs from 'fs';
@@ -167,6 +167,7 @@ export default class UserGridImport extends SfCommand<boolean> {
     let index = 0;
     for (const file of fileList) {
       const inputRec: InputRecord = JSON.parse(String(fs.readFileSync(file)));
+      this.info(` --> Importing ${String(inputRec.fullName)}`);
 
       const outputRec: Record = {
         Id: this.getUserGridId(inputRec.fullName),
@@ -197,11 +198,11 @@ export default class UserGridImport extends SfCommand<boolean> {
         gmpkg__Actions__c: this.buildActions(inputRec),
       };
 
+      this.progress.update(index++);
+
       if (!(await this.saveRecord(outputRec))) {
         this.error(`Unable to import ${file}`);
       }
-
-      this.progress.update(index++);
     }
 
     this.progress.finish();
