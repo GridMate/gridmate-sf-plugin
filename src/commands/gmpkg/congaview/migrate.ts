@@ -461,6 +461,7 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
       contains: 'like',
       doesnotcontain: 'notLike',
       includes: 'includes',
+      excludes: 'excludes',
       dynamic: 'dynamic',
       isnull: 'isnull',
       isnotnull: 'isnotnull',
@@ -504,7 +505,21 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
     if (targetOp === 'includes' && interpreter === 'soql') {
       return {
         operator: 'includes',
-        value: `('${String(fromValue).split(',').join("','")}')`,
+        value: `('${String(fromValue)
+          .split(',')
+          .map((x) => x.trim())
+          .join("','")}')`,
+      };
+    }
+
+    // Excludes operator and soql expression
+    if (targetOp === 'excludes' && interpreter === 'soql') {
+      return {
+        operator: 'excludes',
+        value: `('${String(fromValue)
+          .split(',')
+          .map((x) => x.trim())
+          .join("','")}')`,
       };
     }
 
@@ -512,7 +527,19 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
     if (targetOp === 'includes' && interpreter === 'javascript') {
       return {
         operator: 'includes',
-        value: String(fromValue).split(','),
+        value: String(fromValue)
+          .split(',')
+          .map((x) => x.trim()),
+      };
+    }
+
+    // Excludes operator and javascript expression
+    if (targetOp === 'excludes' && interpreter === 'javascript') {
+      return {
+        operator: 'excludes',
+        value: String(fromValue)
+          .split(',')
+          .map((x) => x.trim()),
       };
     }
 

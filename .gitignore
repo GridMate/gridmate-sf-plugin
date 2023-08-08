@@ -46,3 +46,4 @@ node_modules
 oclif.manifest.json
 data/*
 .coloringrc.json
+src/commands/gmpkg/congaview/.ef-coloringrc.json
