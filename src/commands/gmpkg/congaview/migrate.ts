@@ -23,7 +23,9 @@ import { Record, Field } from 'jsforce';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('gmpkg', 'gmpkg.congaview.migrate');
-const colorings = JSON.parse(String(fs.readFileSync(`${path.resolve(__dirname, '.coloringrc.json')}`)));
+
+const coloringConfigFile = process.env.COLORING_CFG_FILE || `${path.resolve(__dirname, '.coloringrc.json')}`;
+const colorings = JSON.parse(String(fs.readFileSync(coloringConfigFile)));
 
 export type JsonRecord = {
   [field: string]: any;
