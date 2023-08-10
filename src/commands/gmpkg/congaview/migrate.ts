@@ -385,8 +385,7 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
   }
 
   private buildSearchFields(inputRec: JsonRecord): unknown {
-    // Not supported by Conga as of Today
-    return [];
+    return ['Name'];
   }
 
   private buildSort(inputRec: JsonRecord): unknown {
