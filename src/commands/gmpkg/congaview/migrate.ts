@@ -137,9 +137,9 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
         objectApiName: inputRec.CRMC_PP__ObjectName__c,
         description: inputRec.CRMC_PP__Description__c,
         owner: this.buildOwner(inputRec),
-        columns: this.buildColumns(inputRec.CRMC_PP__JSON__c),
-        cellColoring: this.buildCellColoring(inputRec.CRMC_PP__JSON__c),
+        columns: await this.buildColumns(inputRec.CRMC_PP__JSON__c),
         columnStyle: this.buildColumnStyle(inputRec.CRMC_PP__JSON__c),
+        cellColoring: this.buildCellColoring(inputRec.CRMC_PP__JSON__c),
         groupBy: this.buildGroupBy(inputRec.CRMC_PP__JSON__c),
         aggregate: this.buildAggregate(inputRec.CRMC_PP__JSON__c),
         filter: await this.buildFilter(inputRec.CRMC_PP__JSON__c),
@@ -168,13 +168,59 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
     };
   }
 
-  private buildColumns(inputRec: JsonRecord): unknown {
+  private async buildColumns(inputRec: JsonRecord): Promise<unknown> {
     if (inputRec.displayColumns) {
-      return inputRec.displayColumns
+      const columns = inputRec.displayColumns
         .filter((x: JsonRecord) => x.field)
-        .sort((a: JsonRecord, b: JsonRecord) => a.ordinal - b.ordinal)
-        .map((x: JsonRecord) => x.field);
+        .sort((a: JsonRecord, b: JsonRecord) => a.ordinal - b.ordinal);
+
+      for (const x of columns) {
+        x.targetField = x.field;
+
+        if (x.field.includes('.')) {
+          const fieldDesc = await this.getSubFieldDesc(x.field, inputRec.objectName);
+
+          if (fieldDesc.nameField) {
+            let lookupField = x.field.split('.').slice(0, -1).join('.');
+
+            if (lookupField.endsWith('__r')) {
+              const pathList = lookupField.split('.');
+              pathList.push(pathList.pop().replace('__r', '__c'));
+
+              lookupField = pathList.join('.');
+            } else {
+              lookupField = `${String(lookupField)}Id`;
+            }
+
+            x.targetField = lookupField;
+          }
+        }
+      }
+
+      return columns.map((x: JsonRecord) => x.targetField);
     }
+  }
+
+  private buildColumnStyle(inputRec: JsonRecord): unknown {
+    if (inputRec.displayColumns) {
+      const columStyle = inputRec.displayColumns
+        .filter((x: JsonRecord) => x.field)
+        .sort((a: JsonRecord, b: JsonRecord) => b.ordinal - a.ordinal)
+        .reduce((res: JsonRecord, x: JsonRecord) => {
+          const width = parseInt(x.width, 10);
+          res[x.targetField] = `width:${width}px;`;
+          return res;
+        }, {});
+
+      // eslint-disable-next-line camelcase
+      columStyle.gm__header = 'width:120px;';
+
+      return columStyle;
+    }
+  }
+
+  private getDisplayedColumn(inputRec: JsonRecord, field: string): JsonRecord {
+    return inputRec.displayColumns.find((c: JsonRecord) => c.field === field);
   }
 
   private buildCellColoring(inputRec: JsonRecord): unknown {
@@ -182,7 +228,10 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
       return Object.keys(inputRec.conditionalRules).reduce((acc: any, fieldKey: string) => {
         const coloringField = inputRec.conditionalRules[fieldKey];
 
-        acc[fieldKey] = Object.keys(coloringField).map((ruleKey) => {
+        const displayCol = this.getDisplayedColumn(inputRec, fieldKey);
+        if (!displayCol) this.warn(`Invalid coloring column ${String(fieldKey)}`);
+
+        acc[displayCol.targetField] = Object.keys(coloringField).map((ruleKey) => {
           const coloring = coloringField[ruleKey];
           const coloringExp = colorings[coloring.expression];
 
@@ -202,27 +251,14 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
     }
   }
 
-  private buildColumnStyle(inputRec: JsonRecord): unknown {
-    if (inputRec.displayColumns) {
-      const columStyle = inputRec.displayColumns
-        .filter((x: JsonRecord) => x.field)
-        .sort((a: JsonRecord, b: JsonRecord) => b.ordinal - a.ordinal)
-        .reduce((res: JsonRecord, x: JsonRecord) => {
-          const width = parseInt(x.width, 10);
-          res[x.field] = `width:${width}px;`;
-          return res;
-        }, {});
-
-      // eslint-disable-next-line camelcase
-      columStyle.gm__header = 'width:120px;';
-
-      return columStyle;
-    }
-  }
-
   private buildGroupBy(inputRec: JsonRecord): unknown {
     if (inputRec.groups) {
-      return inputRec.groups.map((x: JsonRecord) => x.field);
+      return inputRec.groups.map((x: JsonRecord) => {
+        const displayCol = this.getDisplayedColumn(inputRec, x.field);
+        if (!displayCol) this.warn(`Invalid grouping column ${String(x.field)}`);
+
+        return displayCol.targetField;
+      });
     }
   }
 
@@ -232,8 +268,11 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
       inputRec.groups.forEach((grp: JsonRecord) => {
         grp.aggregates.forEach((agg: JsonRecord) => {
           if (agg.aggregate !== 'count') {
-            if (!aggregate.field) {
-              aggregate[agg.field] = agg.aggregate;
+            const displayCol = this.getDisplayedColumn(inputRec, agg.field);
+            if (!displayCol) this.warn(`Invalid aggregation column ${String(agg.field)}`);
+
+            if (!aggregate[displayCol.targetField]) {
+              aggregate[displayCol.targetField] = agg.aggregate;
             }
           }
         });
@@ -354,10 +393,10 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
         if (fieldPath.includes('.') && refFieldDesc.referenceTo) {
           if (refFieldDesc.referenceTo.length > 0) {
             for (const refObjType of refFieldDesc.referenceTo) {
-              const subRefFieldDesc = await this.getSubFieldDesc(
-                fieldPath.split('.').splice(0, 1).join('.'),
-                refObjType
-              );
+              const pathList = fieldPath.split('.');
+              pathList.splice(0, 1);
+
+              const subRefFieldDesc = await this.getSubFieldDesc(pathList.join('.'), refObjType);
 
               if (subRefFieldDesc) return subRefFieldDesc;
             }
@@ -414,7 +453,7 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
               objectApiName: relatedRec.objectName,
               fullName: `${String(inputRec.Name.replaceAll(' ', '_'))}-${relatedKey}`,
               owner: this.buildOwner(inputRec),
-              columns: this.buildColumns(relatedRec),
+              columns: await this.buildColumns(relatedRec),
               columnStyle: this.buildColumnStyle(relatedRec),
               filter: await this.buildFilter(relatedRec),
               groupBy: this.buildGroupBy(relatedRec),
