@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 /* eslint-disable guard-for-in */
 /* eslint-disable @typescript-eslint/no-for-in-array */
 /* eslint-disable no-await-in-loop */
@@ -231,20 +232,22 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
         const displayCol = this.getDisplayedColumn(inputRec, fieldKey);
         if (!displayCol) this.warn(`Invalid coloring column ${String(fieldKey)}`);
 
-        acc[displayCol.targetField] = Object.keys(coloringField).map((ruleKey) => {
-          const coloring = coloringField[ruleKey];
-          const coloringExp = colorings[coloring.expression];
+        if (displayCol) {
+          acc[displayCol.targetField] = Object.keys(coloringField).map((ruleKey) => {
+            const coloring = coloringField[ruleKey];
+            const coloringExp = colorings[coloring.expression];
 
-          if (!coloringExp) {
-            this.warn(`Not mapped coloring : field => ${fieldKey}, exp => ${String(coloring.expression)}`);
-          }
+            if (!coloringExp) {
+              this.warn(`Not mapped coloring : field => ${fieldKey}, exp => ${String(coloring.expression)}`);
+            }
 
-          return {
-            color: coloring.backColor,
-            exp: coloringExp,
-            label: ruleKey,
-          };
-        });
+            return {
+              color: coloring.backColor,
+              exp: coloringExp,
+              label: ruleKey,
+            };
+          });
+        }
 
         return acc;
       }, {});
@@ -257,7 +260,9 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
         const displayCol = this.getDisplayedColumn(inputRec, x.field);
         if (!displayCol) this.warn(`Invalid grouping column ${String(x.field)}`);
 
-        return displayCol.targetField;
+        if (displayCol) {
+          return displayCol.targetField;
+        }
       });
     }
   }
@@ -271,8 +276,10 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
             const displayCol = this.getDisplayedColumn(inputRec, agg.field);
             if (!displayCol) this.warn(`Invalid aggregation column ${String(agg.field)}`);
 
-            if (!aggregate[displayCol.targetField]) {
-              aggregate[displayCol.targetField] = agg.aggregate;
+            if (displayCol) {
+              if (!aggregate[displayCol.targetField]) {
+                aggregate[displayCol.targetField] = agg.aggregate;
+              }
             }
           }
         });
@@ -544,7 +551,7 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
     // Includes operator and soql expression
     if (targetOp === 'includes' && interpreter === 'soql') {
       return {
-        operator: 'includes',
+        operator: ['picklist', 'multipicklist'].includes(fieldDesc.type) ? 'includes' : 'in',
         value: `('${String(fromValue)
           .split(',')
           .map((x) => x.trim())
@@ -555,7 +562,7 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
     // Excludes operator and soql expression
     if (targetOp === 'excludes' && interpreter === 'soql') {
       return {
-        operator: 'excludes',
+        operator: ['picklist', 'multipicklist'].includes(fieldDesc.type) ? 'excludes' : 'not in',
         value: `('${String(fromValue)
           .split(',')
           .map((x) => x.trim())
@@ -584,6 +591,14 @@ export default class CongaViewMigrate extends SfCommand<boolean> {
     }
 
     // Picklist field
+    if (fieldDesc.type === 'picklist' && interpreter === 'soql') {
+      return {
+        operator: targetOp,
+        value: `('${String(fromValue)}')`,
+      };
+    }
+
+    // In field
     if (fieldDesc.type === 'picklist' && interpreter === 'soql') {
       return {
         operator: targetOp,
