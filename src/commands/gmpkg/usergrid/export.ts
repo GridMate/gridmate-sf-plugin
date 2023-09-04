@@ -165,7 +165,7 @@ export default class UserGridExport extends SfCommand<boolean> {
       for (let i = 0; i < candidateRecords.length; i += chunkSize) {
         const chunk = candidateRecords.slice(i, i + chunkSize);
         const whereCondition = `Id in ('${chunk.map((rec) => rec.Id).join("','")}')`;
-        const soqlQuery = `SELECT Name, \
+        const soqlQuery = `SELECT Id, Name, \
         gmpkg__Developer_Name__c, \
         gmpkg__Object_Name__c, \
         gmpkg__Comment__c, \
