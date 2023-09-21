@@ -137,6 +137,7 @@ export default class UserGridExport extends SfCommand<boolean> {
       gmpkg__Aggregate__c, \
       gmpkg__Actions__c, \
       gmpkg__Compact_Density__c, \
+      gmpkg__FilterType__c, \
       gmpkg__Filter__c, \
       gmpkg__QuickFilters__c, \
       gmpkg__Search_Fields__c, \
@@ -176,6 +177,7 @@ export default class UserGridExport extends SfCommand<boolean> {
         gmpkg__Aggregate__c, \
         gmpkg__Actions__c, \
         gmpkg__Compact_Density__c, \
+        gmpkg__FilterType__c, \
         gmpkg__Filter__c, \
         gmpkg__QuickFilters__c, \
         gmpkg__Search_Fields__c, \
