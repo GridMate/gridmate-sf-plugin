@@ -67,6 +67,7 @@ export type InputRecord = {
   groupBy: string[];
   aggregate: unknown;
   filter: InputFilterProperty;
+  lockedFilter: unknown;
   searchFields: string[];
   sort: Array<{
     fieldApiName: string;
@@ -185,6 +186,7 @@ export default class UserGridImport extends SfCommand<boolean> {
         gmpkg__FilterType__c: this.buildFilterType(inputRec),
         gmpkg__QuickFilters__c: this.buildQuickFilters(inputRec),
         gmpkg__Filter__c: this.buildAdvancedFilter(inputRec),
+        gmpkg__Admin_Filter__c: this.buildLockedFilter(inputRec),
         gmpkg__Search_Fields__c: this.buildSearchFields(inputRec),
         gmpkg__Sort__c: this.buildSort(inputRec),
         gmpkg__PageSize__c: inputRec.pageSize,
@@ -294,6 +296,12 @@ export default class UserGridImport extends SfCommand<boolean> {
     }
 
     return '{"and" : []}';
+  }
+
+  private buildLockedFilter(inputRec: InputRecord): unknown {
+    if (inputRec.lockedFilter) {
+      return JSON.stringify(inputRec.lockedFilter);
+    }
   }
 
   private buildSearchFields(inputRec: InputRecord): unknown {

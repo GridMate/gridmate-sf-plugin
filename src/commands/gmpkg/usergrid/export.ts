@@ -41,6 +41,7 @@ export type OutputRecord = {
     groupBy: unknown;
     aggregate: unknown;
     filter: OutputFilterProperty;
+    lockedFilter: unknown;
     searchFields: unknown;
     sort: unknown;
     pageSize: number;
@@ -140,6 +141,7 @@ export default class UserGridExport extends SfCommand<boolean> {
       gmpkg__FilterType__c, \
       gmpkg__Filter__c, \
       gmpkg__QuickFilters__c, \
+      gmpkg__Admin_Filter__c, \
       gmpkg__Search_Fields__c, \
       gmpkg__Sort__c, \
       gmpkg__Record_Related__c, \
@@ -180,6 +182,7 @@ export default class UserGridExport extends SfCommand<boolean> {
         gmpkg__FilterType__c, \
         gmpkg__Filter__c, \
         gmpkg__QuickFilters__c, \
+        gmpkg__Admin_Filter__c, \
         gmpkg__Search_Fields__c, \
         gmpkg__Sort__c, \
         gmpkg__Record_Related__c, \
@@ -226,6 +229,7 @@ export default class UserGridExport extends SfCommand<boolean> {
           groupBy: this.buildGroupBy(inputRec),
           aggregate: this.buildAggregate(inputRec),
           filter: this.buildFilter(inputRec),
+          lockedFilter: this.buildLockedFilter(inputRec),
           searchFields: this.buildSearchFields(inputRec),
           sort: this.buildSort(inputRec),
           pageSize: inputRec.gmpkg__PageSize__c,
@@ -315,6 +319,12 @@ export default class UserGridExport extends SfCommand<boolean> {
       type: String(inputRec.gmpkg__FilterType__c),
       value: JSON.parse(String(inputRec.gmpkg__Filter__c ?? '{}')),
     };
+  }
+
+  private buildLockedFilter(inputRec: Record): unknown {
+    if (inputRec.gmpkg__Admin_Filter__c) {
+      return JSON.parse(String(inputRec.gmpkg__Admin_Filter__c));
+    }
   }
 
   private buildSearchFields(inputRec: Record): unknown {
