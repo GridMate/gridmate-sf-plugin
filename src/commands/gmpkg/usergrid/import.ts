@@ -75,6 +75,7 @@ export type InputRecord = {
   }>;
   pageSize: number;
   denstity: string;
+  customLabels: unknown;
   customIcon: string;
   frozenColumns: number;
   showColumnBorder: boolean;
@@ -191,6 +192,7 @@ export default class UserGridImport extends SfCommand<boolean> {
         gmpkg__Sort__c: this.buildSort(inputRec),
         gmpkg__PageSize__c: inputRec.pageSize,
         gmpkg__Compact_Density__c: this.buildDensity(inputRec),
+        gmpkg__Custom_Label__c: this.buildCustomLabels(inputRec),
         gmpkg__Custom_Icon__c: inputRec.customIcon,
         gmpkg__Frozen_Columns__c: inputRec.frozenColumns,
         gmpkg__Show_Column_Border__c: inputRec.showColumnBorder,
@@ -343,6 +345,11 @@ export default class UserGridImport extends SfCommand<boolean> {
     return '[]';
   }
 
+  private buildCustomLabels(inputRec: InputRecord): unknown {
+    if (inputRec.customLabels) {
+      return JSON.stringify(inputRec.customLabels);
+    }
+  }
   private async saveRecord(outputRec: Record): Promise<boolean> {
     try {
       if (this.connection) {

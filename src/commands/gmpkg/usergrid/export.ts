@@ -46,6 +46,7 @@ export type OutputRecord = {
     sort: unknown;
     pageSize: number;
     denstity: string;
+    customLabels: unknown;
     customIcon: string;
     frozenColumns: number;
     showColumnBorder: boolean;
@@ -127,13 +128,14 @@ export default class UserGridExport extends SfCommand<boolean> {
 
     if (flags.name) {
       const whereCondition = `gmpkg__Developer_Name__c in ('${flags.name.split(',').join("','")}')`;
-      const soqlQuery = `SELECT Name, \
+      const soqlQuery = `SELECT Id, Name, \
       gmpkg__Developer_Name__c, \
       gmpkg__Object_Name__c, \
       gmpkg__Comment__c, \
       gmpkg__Columns__c, \
       gmpkg__Formulas__c, \
       gmpkg__Cell_Coloring__c, \
+      gmpkg__Column_Style__c, \
       gmpkg__GroupBy__c, \
       gmpkg__Aggregate__c, \
       gmpkg__Actions__c, \
@@ -151,6 +153,7 @@ export default class UserGridExport extends SfCommand<boolean> {
       gmpkg__Show_Record_Details__c, \
       gmpkg__Split_View__c, \
       gmpkg__PageSize__c, \
+      gmpkg__Custom_Label__c, \
       OwnerId, \
       Owner.Username, \
       CreatedDate, \
@@ -175,6 +178,7 @@ export default class UserGridExport extends SfCommand<boolean> {
         gmpkg__Columns__c, \
         gmpkg__Formulas__c, \
         gmpkg__Cell_Coloring__c, \
+        gmpkg__Column_Style__c, \
         gmpkg__GroupBy__c, \
         gmpkg__Aggregate__c, \
         gmpkg__Actions__c, \
@@ -192,6 +196,7 @@ export default class UserGridExport extends SfCommand<boolean> {
         gmpkg__Show_Record_Details__c, \
         gmpkg__Split_View__c, \
         gmpkg__PageSize__c, \
+        gmpkg__Custom_Label__c, \
         OwnerId, \
         Owner.Username, \
         CreatedDate, \
@@ -234,6 +239,7 @@ export default class UserGridExport extends SfCommand<boolean> {
           sort: this.buildSort(inputRec),
           pageSize: inputRec.gmpkg__PageSize__c,
           denstity: this.buildDensity(inputRec),
+          customLabels: this.buildCustomLabels(inputRec),
           customIcon: inputRec.gmpkg__Custom_Icon__c,
           frozenColumns: inputRec.gmpkg__Frozen_Columns__c,
           showColumnBorder: inputRec.gmpkg__Show_Column_Border__c,
@@ -365,6 +371,12 @@ export default class UserGridExport extends SfCommand<boolean> {
     }
 
     return [];
+  }
+
+  private buildCustomLabels(inputRec: Record): unknown {
+    if (inputRec.gmpkg__Custom_Label__c) {
+      return JSON.parse(String(inputRec.gmpkg__Custom_Label__c));
+    }
   }
 
   private saveRecord(outputRec: OutputRecord, directory: string): boolean {
