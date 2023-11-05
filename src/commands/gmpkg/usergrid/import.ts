@@ -350,6 +350,7 @@ export default class UserGridImport extends SfCommand<boolean> {
       return JSON.stringify(inputRec.customLabels);
     }
   }
+
   private async saveRecord(outputRec: Record): Promise<boolean> {
     try {
       if (this.connection) {
