@@ -41,12 +41,18 @@ export type InputFilterProperty = {
 };
 
 export type InputRelatedComponent = {
+  type: string;
+  label: string;
+  name: string;
   component: string;
-  attributes: {
-    userGridId: string;
-    userGridApiName: string;
-    adminFilter: string;
-  };
+  attributes: unknown;
+};
+
+export type UserGridAttributes = {
+  userGridId: string;
+  userGridApiName: string;
+  adminFilter: string;
+  density: string;
 };
 
 export type InputRecord = {
@@ -83,6 +89,17 @@ export type InputRecord = {
   enableSplitView: boolean;
   related: InputRelatedComponent[];
   actions: unknown;
+  pagination: string;
+  interactiveFilters: string;
+  gridExplorer: string;
+  enableExport: string;
+  enalbleImport: string;
+  enableFilterLink: string;
+  enableAutoFill: string;
+  hiddenColumns: string[];
+  defaultValues: unknown;
+  hiddenFields: string[];
+  fullRecordCreation: boolean;
 };
 
 export type OutputRelatedComponent = {
@@ -198,8 +215,19 @@ export default class UserGridImport extends SfCommand<boolean> {
         gmpkg__Show_Column_Border__c: inputRec.showColumnBorder,
         gmpkg__Show_Record_Details__c: inputRec.showRecordDetails,
         gmpkg__Split_View__c: inputRec.enableSplitView,
+        gmpkg__Pagination__c: inputRec.pagination,
+        gmpkg__InteractiveFilters__c: inputRec.interactiveFilters,
+        gmpkg__GridExplorer__c: inputRec.gridExplorer,
         gmpkg__Record_Related__c: this.buildRelated(inputRec),
         gmpkg__Actions__c: this.buildActions(inputRec),
+        gmpkg__Export__c: inputRec.enableExport,
+        gmpkg__Import__c: inputRec.enalbleImport,
+        gmpkg__Filter_Link__c: inputRec.enableFilterLink,
+        gmpkg__AutoFill__c: inputRec.enableAutoFill,
+        gmpkg__Hidden_Columns__c: this.buildHiddenColumns(inputRec),
+        gmpkg__Default_Values__c: this.buildDefaultValues(inputRec),
+        gmpkg__Hidden_Fields__c: this.buildHiddenFields(inputRec),
+        gmpkg__FullRecord_Creation__c: inputRec.fullRecordCreation,
       };
 
       this.progress.update(index++);
@@ -327,18 +355,17 @@ export default class UserGridImport extends SfCommand<boolean> {
   private buildRelated(inputRec: InputRecord): unknown {
     if (inputRec.related && inputRec.related.length > 0) {
       return JSON.stringify(
-        inputRec.related.map((related: InputRelatedComponent) => ({
-          type: 'GM - User Grid',
-          key: related.attributes.userGridId,
-          label: String(this.getUserGridLabel(related.attributes.userGridApiName)),
-          props: `Filter : ${related.attributes.adminFilter}`,
-          component: related.component,
-          attributes: {
-            userGridId: this.getUserGridId(related.attributes.userGridApiName),
-            adminFilter: related.attributes.adminFilter,
-            density: 'compact',
-          },
-        }))
+        inputRec.related.map((cmp: InputRelatedComponent) => {
+          if (cmp.type === 'GM - User Grid') {
+            const attributes = cmp.attributes as UserGridAttributes;
+            if (attributes?.userGridApiName) {
+              attributes.userGridId = this.getUserGridId(attributes.userGridApiName);
+              delete attributes.userGridApiName;
+            }
+          }
+
+          return cmp;
+        })
       );
     }
 
@@ -349,6 +376,30 @@ export default class UserGridImport extends SfCommand<boolean> {
     if (inputRec.customLabels) {
       return JSON.stringify(inputRec.customLabels);
     }
+  }
+
+  private buildHiddenColumns(inputRec: InputRecord): unknown {
+    if (inputRec.hiddenColumns && inputRec.hiddenColumns.length > 0) {
+      return inputRec.hiddenColumns.join(',');
+    }
+
+    return '';
+  }
+
+  private buildDefaultValues(inputRec: InputRecord): unknown {
+    if (inputRec.defaultValues) {
+      return JSON.stringify(inputRec.defaultValues);
+    }
+
+    return null;
+  }
+
+  private buildHiddenFields(inputRec: InputRecord): unknown {
+    if (inputRec.hiddenFields && inputRec.hiddenFields.length > 0) {
+      return inputRec.hiddenFields.join(',');
+    }
+
+    return '';
   }
 
   private async saveRecord(outputRec: Record): Promise<boolean> {

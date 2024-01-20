@@ -54,6 +54,17 @@ export type OutputRecord = {
     enableSplitView: boolean;
     related: OutputRelatedComponent[];
     actions: unknown;
+    pagination: string;
+    interactiveFilters: string;
+    gridExplorer: string;
+    enableExport: string;
+    enalbleImport: string;
+    enableFilterLink: string;
+    enableAutoFill: string;
+    hiddenColumns: unknown;
+    defaultValues: unknown;
+    hiddenFields: unknown;
+    fullRecordCreation: boolean;
   };
 };
 
@@ -68,12 +79,18 @@ export type OutputFilterProperty = {
 };
 
 export type OutputRelatedComponent = {
+  type: string;
+  label: string;
+  name: string;
   component: string;
-  attributes: {
-    userGridId: string;
-    userGridApiName: string;
-    adminFilter: string;
-  };
+  attributes: unknown;
+};
+
+export type UserGridAttributes = {
+  userGridId: string;
+  userGridApiName: string;
+  adminFilter: string;
+  density: string;
 };
 
 export default class UserGridExport extends SfCommand<boolean> {
@@ -154,6 +171,17 @@ export default class UserGridExport extends SfCommand<boolean> {
       gmpkg__Split_View__c, \
       gmpkg__PageSize__c, \
       gmpkg__Custom_Label__c, \
+      gmpkg__Pagination__c, \
+      gmpkg__InteractiveFilters__c, \
+      gmpkg__GridExplorer__c, \
+      gmpkg__Export__c, \
+      gmpkg__Import__c, \
+      gmpkg__Filter_Link__c, \
+      gmpkg__AutoFill__c, \
+      gmpkg__Hidden_Columns__c, \
+      gmpkg__Default_Values__c, \
+      gmpkg__Hidden_Fields__c, \
+      gmpkg__FullRecord_Creation__c, \
       OwnerId, \
       Owner.Username, \
       CreatedDate, \
@@ -197,6 +225,17 @@ export default class UserGridExport extends SfCommand<boolean> {
         gmpkg__Split_View__c, \
         gmpkg__PageSize__c, \
         gmpkg__Custom_Label__c, \
+        gmpkg__Pagination__c, \
+        gmpkg__InteractiveFilters__c, \
+        gmpkg__GridExplorer__c, \
+        gmpkg__Export__c, \
+        gmpkg__Import__c, \
+        gmpkg__Filter_Link__c, \
+        gmpkg__AutoFill__c, \
+        gmpkg__Hidden_Columns__c, \
+        gmpkg__Default_Values__c, \
+        gmpkg__Hidden_Fields__c, \
+        gmpkg__FullRecord_Creation__c, \
         OwnerId, \
         Owner.Username, \
         CreatedDate, \
@@ -245,8 +284,19 @@ export default class UserGridExport extends SfCommand<boolean> {
           showColumnBorder: inputRec.gmpkg__Show_Column_Border__c,
           showRecordDetails: inputRec.gmpkg__Show_Record_Details__c,
           enableSplitView: inputRec.gmpkg__Split_View__c,
+          pagination: inputRec.gmpkg__Pagination__c,
+          interactiveFilters: inputRec.gmpkg__InteractiveFilters__c,
+          gridExplorer: inputRec.gmpkg__GridExplorer__c,
           related: this.buildRelated(inputRec),
           actions: this.buildActions(inputRec),
+          enableExport: inputRec.gmpkg__Export__c,
+          enalbleImport: inputRec.gmpkg__Import__c,
+          enableFilterLink: inputRec.gmpkg__Filter_Link__c,
+          enableAutoFill: inputRec.gmpkg__AutoFill__c,
+          hiddenColumns: this.buildHiddenColumns(inputRec),
+          defaultValues: this.buildDefaultValues(inputRec),
+          hiddenFields: this.buildHiddenFields(inputRec),
+          fullRecordCreation: inputRec.gmpkg__FullRecord_Creation__c,
         },
       };
 
@@ -360,14 +410,17 @@ export default class UserGridExport extends SfCommand<boolean> {
     if (inputRec.gmpkg__Record_Related__c) {
       const relatedList = JSON.parse(String(inputRec.gmpkg__Record_Related__c));
 
-      return relatedList.map((related: OutputRelatedComponent) => ({
-        component: related.component,
-        attributes: {
-          userGridId: related.attributes.userGridId,
-          userGridApiName: this.getUserGridApiName(String(related.attributes.userGridId)),
-          adminFilter: related.attributes.adminFilter,
-        },
-      }));
+      return relatedList.map((cmp: OutputRelatedComponent) => {
+        if (cmp.type === 'GM - User Grid') {
+          const attributes = cmp.attributes as UserGridAttributes;
+
+          if (attributes?.userGridId) {
+            attributes.userGridApiName = this.getUserGridApiName(attributes.userGridId);
+          }
+        }
+
+        return cmp;
+      });
     }
 
     return [];
@@ -379,6 +432,34 @@ export default class UserGridExport extends SfCommand<boolean> {
     }
   }
 
+  private buildHiddenColumns(inputRec: Record): unknown {
+    if (inputRec.gmpkg__Hidden_Columns__c) {
+      return String(inputRec.gmpkg__Hidden_Columns__c)
+        .split(',')
+        .map((x) => x.trim());
+    }
+
+    return null;
+  }
+
+  private buildDefaultValues(inputRec: Record): unknown {
+    if (inputRec.gmpkg__Default_Values__c) {
+      return JSON.parse(String(inputRec.gmpkg__Default_Values__c));
+    }
+
+    return null;
+  }
+
+  private buildHiddenFields(inputRec: Record): unknown {
+    if (inputRec.gmpkg__Hidden_Fields__c) {
+      return String(inputRec.gmpkg__Hidden_Fields__c)
+        .split(',')
+        .map((x) => x.trim());
+    }
+
+    return null;
+  }
+
   private saveRecord(outputRec: OutputRecord, directory: string): boolean {
     const filePath = path.join(directory, String(outputRec.fullName));
 
@@ -388,7 +469,7 @@ export default class UserGridExport extends SfCommand<boolean> {
     return true;
   }
 
-  private getUserGridApiName(recordId: string): unknown {
+  private getUserGridApiName(recordId: string): string {
     if (this.userGridCache) {
       const userGrid = this.userGridCache.find((x) => x.Id === recordId);
 
