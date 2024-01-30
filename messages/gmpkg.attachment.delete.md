@@ -1,10 +1,10 @@
 # summary
 
-Export related attachments
+Delete related attachments
 
 # description
 
-Export related attachments based on an SOQL query
+Delete related documents based on an SOQL query
 
 # flags.targetOrg.summary
 
@@ -14,17 +14,9 @@ Target org username/alias
 
 Salesforce API Version
 
-# flags.name.summary
-
-Field name to build the record export directroy.
-
 # flags.query.summary
 
 SOQL query to fetch list of records
-
-# flags.directory.summary
-
-Export root directory.
 
 # examples
 
