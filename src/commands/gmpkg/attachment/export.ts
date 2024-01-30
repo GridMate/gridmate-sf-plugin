@@ -55,15 +55,8 @@ export default class AttachmentExport extends SfCommand<boolean> {
 
   public async run(): Promise<boolean> {
     const { flags } = await this.parse(AttachmentExport);
-
-    if (!flags.query && !flags.report) {
-      this.error('Missing query or report)');
-    }
-
     const connection = flags['target-org'].getConnection(flags['api-version']);
     const records: Record[] = (await connection.query(flags.query)).records;
-
-    // Get the list of the records from a report
 
     let counter = 0;
     this.progress.start(counter, {});
@@ -71,18 +64,21 @@ export default class AttachmentExport extends SfCommand<boolean> {
 
     const chunks = this.arrayToChunks(records, 50);
     for (const chunck of chunks) {
-      const idList = chunck.map((x) => x.Id);
-
+      // Get the list of documents
       const attachments = (
         await connection.query(
-          `Select Id, ContentDocumentId, LinkedEntityId, 
-        ContentDocument.Title, 
-        ContentDocument.FileExtension, 
-        ContentDocument.LatestPublishedVersionId 
-        From ContentDocumentLink Where LinkedEntityId in ('${idList.join("','")}')`
+          `Select Id, 
+          ContentDocumentId, 
+          LinkedEntityId, 
+          ContentDocument.Title, 
+          ContentDocument.FileExtension, 
+          ContentDocument.LatestPublishedVersionId 
+          From ContentDocumentLink 
+          Where LinkedEntityId in ('${chunck.map((x) => x.Id).join("','")}')`
         )
       ).records;
 
+      // Download them
       for (const record of chunck) {
         const recAttachments = attachments.filter((x: Record) => x.LinkedEntityId === record.Id);
 
