@@ -100,6 +100,8 @@ export type InputRecord = {
   defaultValues: unknown;
   hiddenFields: string[];
   fullRecordCreation: boolean;
+  buttonActions: boolean;
+  recordActions: unknown;
 };
 
 export type OutputRelatedComponent = {
@@ -228,6 +230,8 @@ export default class UserGridImport extends SfCommand<boolean> {
         gmpkg__Default_Values__c: this.buildDefaultValues(inputRec),
         gmpkg__Hidden_Fields__c: this.buildHiddenFields(inputRec),
         gmpkg__FullRecord_Creation__c: inputRec.fullRecordCreation,
+        gmpkg__Actions_As_Buttons__c: inputRec.buttonActions,
+        gmpkg__Record_Actions__c: this.buildRecordActions(inputRec),
       };
 
       this.progress.update(index++);
@@ -299,6 +303,14 @@ export default class UserGridImport extends SfCommand<boolean> {
   private buildActions(inputRec: InputRecord): unknown {
     if (inputRec.actions) {
       return JSON.stringify(inputRec.actions);
+    }
+
+    return '[]';
+  }
+
+  private buildRecordActions(inputRec: InputRecord): unknown {
+    if (inputRec.recordActions) {
+      return JSON.stringify(inputRec.recordActions);
     }
 
     return '[]';

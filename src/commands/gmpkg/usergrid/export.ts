@@ -65,6 +65,8 @@ export type OutputRecord = {
     defaultValues: unknown;
     hiddenFields: unknown;
     fullRecordCreation: boolean;
+    buttonActions: boolean;
+    recordActions: unknown;
   };
 };
 
@@ -182,6 +184,8 @@ export default class UserGridExport extends SfCommand<boolean> {
       gmpkg__Default_Values__c, \
       gmpkg__Hidden_Fields__c, \
       gmpkg__FullRecord_Creation__c, \
+      gmpkg__Actions_As_Buttons__c, \
+      gmpkg__Record_Actions__c, \
       OwnerId, \
       Owner.Username, \
       CreatedDate, \
@@ -236,6 +240,8 @@ export default class UserGridExport extends SfCommand<boolean> {
         gmpkg__Default_Values__c, \
         gmpkg__Hidden_Fields__c, \
         gmpkg__FullRecord_Creation__c, \
+        gmpkg__Actions_As_Buttons__c, \
+        gmpkg__Record_Actions__c, \
         OwnerId, \
         Owner.Username, \
         CreatedDate, \
@@ -297,6 +303,8 @@ export default class UserGridExport extends SfCommand<boolean> {
           defaultValues: this.buildDefaultValues(inputRec),
           hiddenFields: this.buildHiddenFields(inputRec),
           fullRecordCreation: inputRec.gmpkg__FullRecord_Creation__c,
+          buttonActions: inputRec.gmpkg__Actions_As_Buttons__c,
+          recordActions: this.buildRecordActions(inputRec),
         },
       };
 
@@ -356,6 +364,12 @@ export default class UserGridExport extends SfCommand<boolean> {
   private buildActions(inputRec: Record): unknown {
     if (inputRec.gmpkg__Actions__c) {
       return JSON.parse(String(inputRec.gmpkg__Actions__c));
+    }
+  }
+
+  private buildRecordActions(inputRec: Record): unknown {
+    if (inputRec.gmpkg__Record_Actions__c) {
+      return JSON.parse(String(inputRec.gmpkg__Record_Actions__c));
     }
   }
 
