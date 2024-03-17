@@ -102,6 +102,15 @@ export type InputRecord = {
   fullRecordCreation: boolean;
   buttonActions: boolean;
   recordActions: unknown;
+  massClone: string;
+  massUpdate: string;
+  massDelete: string;
+  modalCreate: string;
+  modalUpdate: string;
+  inlineCreate: string;
+  inlineUpdate: string;
+  collapseGroups: boolean;
+  multiLevelGrouping: boolean;
 };
 
 export type OutputRelatedComponent = {
@@ -232,6 +241,15 @@ export default class UserGridImport extends SfCommand<boolean> {
         gmpkg__FullRecord_Creation__c: inputRec.fullRecordCreation,
         gmpkg__Actions_As_Buttons__c: inputRec.buttonActions,
         gmpkg__Record_Actions__c: this.buildRecordActions(inputRec),
+        gmpkg__MassClone__c: inputRec.massClone,
+        gmpkg__MassUpdate__c: inputRec.massUpdate,
+        gmpkg__MassDelete__c: inputRec.massDelete,
+        gmpkg__ModalCreate__c: inputRec.modalCreate,
+        gmpkg__ModalUpdate__c: inputRec.modalUpdate,
+        gmpkg__InlineCreate__c: inputRec.inlineCreate,
+        gmpkg__InlineUpdate__c: inputRec.inlineUpdate,
+        gmpkg__Collapse_Groups__c: inputRec.collapseGroups,
+        gmpkg__MultiLevel_Grouping__c: inputRec.multiLevelGrouping,
       };
 
       this.progress.update(index++);

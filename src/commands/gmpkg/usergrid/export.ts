@@ -67,6 +67,15 @@ export type OutputRecord = {
     fullRecordCreation: boolean;
     buttonActions: boolean;
     recordActions: unknown;
+    massClone: string;
+    massUpdate: string;
+    massDelete: string;
+    modalCreate: string;
+    modalUpdate: string;
+    inlineCreate: string;
+    inlineUpdate: string;
+    collapseGroups: boolean;
+    multiLevelGrouping: boolean;
   };
 };
 
@@ -186,6 +195,15 @@ export default class UserGridExport extends SfCommand<boolean> {
       gmpkg__FullRecord_Creation__c, \
       gmpkg__Actions_As_Buttons__c, \
       gmpkg__Record_Actions__c, \
+      gmpkg__MassClone__c, \
+      gmpkg__MassUpdate__c, \
+      gmpkg__MassDelete__c, \
+      gmpkg__ModalCreate__c, \
+      gmpkg__ModalUpdate__c, \
+      gmpkg__InlineCreate__c, \
+      gmpkg__InlineUpdate__c, \
+      gmpkg__Collapse_Groups__c, \
+      gmpkg__MultiLevel_Grouping__c, \
       OwnerId, \
       Owner.Username, \
       CreatedDate, \
@@ -242,6 +260,15 @@ export default class UserGridExport extends SfCommand<boolean> {
         gmpkg__FullRecord_Creation__c, \
         gmpkg__Actions_As_Buttons__c, \
         gmpkg__Record_Actions__c, \
+        gmpkg__MassClone__c, \
+        gmpkg__MassUpdate__c, \
+        gmpkg__MassDelete__c, \
+        gmpkg__ModalCreate__c, \
+        gmpkg__ModalUpdate__c, \
+        gmpkg__InlineCreate__c, \
+        gmpkg__InlineUpdate__c, \
+        gmpkg__Collapse_Groups__c, \
+        gmpkg__MultiLevel_Grouping__c, \
         OwnerId, \
         Owner.Username, \
         CreatedDate, \
@@ -305,6 +332,15 @@ export default class UserGridExport extends SfCommand<boolean> {
           fullRecordCreation: inputRec.gmpkg__FullRecord_Creation__c,
           buttonActions: inputRec.gmpkg__Actions_As_Buttons__c,
           recordActions: this.buildRecordActions(inputRec),
+          massClone: inputRec.gmpkg__MassClone__c,
+          massUpdate: inputRec.gmpkg__MassUpdate__c,
+          massDelete: inputRec.gmpkg__MassDelete__c,
+          modalCreate: inputRec.gmpkg__ModalCreate__c,
+          modalUpdate: inputRec.gmpkg__ModalUpdate__c,
+          inlineCreate: inputRec.gmpkg__InlineCreate__c,
+          inlineUpdate: inputRec.gmpkg__InlineUpdate__c,
+          collapseGroups: inputRec.gmpkg__Collapse_Groups__c,
+          multiLevelGrouping: inputRec.gmpkg__MultiLevel_Grouping__c,
         },
       };
 
