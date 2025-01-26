@@ -149,6 +149,12 @@ export default class UserGridImport extends SfCommand<boolean> {
       required: false,
     }),
 
+    owner: Flags.string({
+      summary: messages.getMessage('flags.owner.summary'),
+      char: 'u',
+      required: false,
+    }),
+
     'api-version': Flags.orgApiVersion({
       summary: messages.getMessage('flags.orgApiVersion.summary'),
       required: true,
@@ -202,7 +208,7 @@ export default class UserGridImport extends SfCommand<boolean> {
       const outputRec: Record = {
         Id: this.getUserGridId(inputRec.fullName),
         Name: inputRec.label,
-        Owner: this.buildOwner(inputRec),
+        Owner: this.buildOwner(inputRec, flags.owner),
         gmpkg__Developer_Name__c: inputRec.fullName,
         gmpkg__Object_Name__c: inputRec.objectApiName,
         gmpkg__Comment__c: inputRec.description,
@@ -263,12 +269,12 @@ export default class UserGridImport extends SfCommand<boolean> {
     return true;
   }
 
-  private buildOwner(inputRec: InputRecord): OutputOwnerProperty {
+  private buildOwner(inputRec: InputRecord, owner: string): OutputOwnerProperty {
     return {
       attributes: {
         type: 'User',
       },
-      Username: String(inputRec.owner.username),
+      Username: owner || String(inputRec.owner.username),
     };
   }
 

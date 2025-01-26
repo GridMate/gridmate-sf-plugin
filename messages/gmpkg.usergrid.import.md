@@ -18,11 +18,16 @@ file path to import
 
 directory path to import.
 
+# flags.owner.summary
+
+default grid owner
+
 # flags.orgApiVersion.summary
 
 Salesforce API Version
 
 # examples
 
-- <%= config.bin %> <%= command.id %> -o gmpkg-demo --api-version=58.0 -f "/data/Opportunity/import/Opportunity_All_Grid.json"
 - <%= config.bin %> <%= command.id %> -o gmpkg-demo --api-version=58.0 -d "/data/Opportunity/import"
+- <%= config.bin %> <%= command.id %> -o gmpkg-demo --api-version=58.0 -f "/data/Opportunity/import" -u username
+- <%= config.bin %> <%= command.id %> -o gmpkg-demo --api-version=58.0 -f "/data/Opportunity/import/Opportunity_All_Grid.json"
