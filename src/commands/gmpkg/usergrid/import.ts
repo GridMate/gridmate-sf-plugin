@@ -94,6 +94,7 @@ export type InputRecord = {
   gridExplorer: string;
   enableExport: string;
   enalbleImport: string;
+  enableUserFilter: string;
   enableFilterLink: string;
   enableAutoFill: string;
   hiddenColumns: string[];
@@ -239,6 +240,7 @@ export default class UserGridImport extends SfCommand<boolean> {
         gmpkg__Actions__c: this.buildActions(inputRec),
         gmpkg__Export__c: inputRec.enableExport,
         gmpkg__Import__c: inputRec.enalbleImport,
+        gmpkg__EndUser_Filter__c: inputRec.enableUserFilter,
         gmpkg__Filter_Link__c: inputRec.enableFilterLink,
         gmpkg__AutoFill__c: inputRec.enableAutoFill,
         gmpkg__Hidden_Columns__c: this.buildHiddenColumns(inputRec),
@@ -450,16 +452,6 @@ export default class UserGridImport extends SfCommand<boolean> {
       return true;
     } catch (err) {
       this.error(String(err));
-    }
-  }
-
-  private getUserGridLabel(userGridApiName: string): unknown {
-    if (this.userGridCache) {
-      const userGrid = this.userGridCache.find((x) => x.gmpkg__Developer_Name__c === userGridApiName);
-
-      if (userGrid?.Name) {
-        return userGrid.Name;
-      }
     }
   }
 

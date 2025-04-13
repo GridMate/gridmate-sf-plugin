@@ -59,6 +59,7 @@ export type OutputRecord = {
     gridExplorer: string;
     enableExport: string;
     enalbleImport: string;
+    enableUserFilter: string;
     enableFilterLink: string;
     enableAutoFill: string;
     hiddenColumns: unknown;
@@ -187,6 +188,7 @@ export default class UserGridExport extends SfCommand<boolean> {
       gmpkg__GridExplorer__c, \
       gmpkg__Export__c, \
       gmpkg__Import__c, \
+      gmpkg__EndUser_Filter__c, \
       gmpkg__Filter_Link__c, \
       gmpkg__AutoFill__c, \
       gmpkg__Hidden_Columns__c, \
@@ -252,6 +254,7 @@ export default class UserGridExport extends SfCommand<boolean> {
         gmpkg__GridExplorer__c, \
         gmpkg__Export__c, \
         gmpkg__Import__c, \
+        gmpkg__EndUser_Filter__c, \
         gmpkg__Filter_Link__c, \
         gmpkg__AutoFill__c, \
         gmpkg__Hidden_Columns__c, \
@@ -324,6 +327,7 @@ export default class UserGridExport extends SfCommand<boolean> {
           actions: this.buildActions(inputRec),
           enableExport: inputRec.gmpkg__Export__c,
           enalbleImport: inputRec.gmpkg__Import__c,
+          enableUserFilter: inputRec.gmpkg__EndUser_Filter__c,
           enableFilterLink: inputRec.gmpkg__Filter_Link__c,
           enableAutoFill: inputRec.gmpkg__AutoFill__c,
           hiddenColumns: this.buildHiddenColumns(inputRec),
