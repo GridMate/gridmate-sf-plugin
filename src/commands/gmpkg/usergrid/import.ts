@@ -323,7 +323,7 @@ export default class UserGridImport extends SfCommand<boolean> {
       return JSON.stringify(inputRec.aggregate);
     }
 
-    return '{}';
+    return null;
   }
 
   private buildActions(inputRec: InputRecord): unknown {
