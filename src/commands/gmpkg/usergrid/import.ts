@@ -87,6 +87,7 @@ export type InputRecord = {
   showColumnBorder: boolean;
   showRecordDetails: boolean;
   enableSplitView: boolean;
+  relatedLayout: string;
   related: InputRelatedComponent[];
   actions: unknown;
   pagination: string;
@@ -236,6 +237,7 @@ export default class UserGridImport extends SfCommand<boolean> {
         gmpkg__Pagination__c: inputRec.pagination,
         gmpkg__InteractiveFilters__c: inputRec.interactiveFilters,
         gmpkg__GridExplorer__c: inputRec.gridExplorer,
+        gmpkg__Record_Related_Layout__c: inputRec.relatedLayout,
         gmpkg__Record_Related__c: this.buildRelated(inputRec),
         gmpkg__Actions__c: this.buildActions(inputRec),
         gmpkg__Export__c: inputRec.enableExport,

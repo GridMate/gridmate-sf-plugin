@@ -52,6 +52,7 @@ export type OutputRecord = {
     showColumnBorder: boolean;
     showRecordDetails: boolean;
     enableSplitView: boolean;
+    relatedLayout: string;
     related: OutputRelatedComponent[];
     actions: unknown;
     pagination: string;
@@ -175,6 +176,7 @@ export default class UserGridExport extends SfCommand<boolean> {
       gmpkg__Admin_Filter__c, \
       gmpkg__Search_Fields__c, \
       gmpkg__Sort__c, \
+      gmpkg__Record_Related_Layout__c, \
       gmpkg__Record_Related__c, \
       gmpkg__Custom_Icon__c, \
       gmpkg__Frozen_Columns__c, \
@@ -241,6 +243,7 @@ export default class UserGridExport extends SfCommand<boolean> {
         gmpkg__Admin_Filter__c, \
         gmpkg__Search_Fields__c, \
         gmpkg__Sort__c, \
+        gmpkg__Record_Related_Layout__c, \
         gmpkg__Record_Related__c, \
         gmpkg__Custom_Icon__c, \
         gmpkg__Frozen_Columns__c, \
@@ -323,6 +326,7 @@ export default class UserGridExport extends SfCommand<boolean> {
           pagination: inputRec.gmpkg__Pagination__c,
           interactiveFilters: inputRec.gmpkg__InteractiveFilters__c,
           gridExplorer: inputRec.gmpkg__GridExplorer__c,
+          relatedLayout: inputRec.gmpkg__Record_Related_Layout__c,
           related: this.buildRelated(inputRec),
           actions: this.buildActions(inputRec),
           enableExport: inputRec.gmpkg__Export__c,
